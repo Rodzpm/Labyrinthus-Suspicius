@@ -9,13 +9,10 @@ class Game:
         self.screen = pygame.display.set_mode(res)
         self.running = True 
         self.clock = pygame.time.Clock()
-        self.player = Player(300,200,(255,0,0),2)
+        self.player = Player(20,20,(255,0,0),2)
         self.map = Map(self.res,(0,255,0),(0,0,255),self.scale)
-        self.map.walk(randrange(self.map.res[0]),randrange(self.map.res[1]))
-        print("fin")
-        self.map.carte[20][30] = True
-        print(self.map.carte)
-
+        self.carte = self.map.make_maze()
+        self.carte[1][1] = True
 
     def handle_inputs(self,player):
         pressed = pygame.key.get_pressed()
@@ -30,9 +27,9 @@ class Game:
 
     def draw_map(self,scale):
         wall_coll = []
-        for i in range(40):
-            for j in range(60):
-                if not self.map.carte[i][j]:
+        for i in range(20):
+            for j in range(30):
+                if not self.carte[i][j]:
                     wall_coll.append(pygame.Rect(j*scale,i*scale,scale,scale))
                     pygame.draw.rect(self.screen,self.map.mur,pygame.Rect(j*scale,i*scale,scale,scale))
                 else:

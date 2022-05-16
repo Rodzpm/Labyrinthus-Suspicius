@@ -1,24 +1,27 @@
-from random import randint
+from random import shuffle, randrange
 
-from random import shuffle
 class Map:
     def __init__(self,res,mur,sol,scale):
-        self.res = [res[0]//10,res[1]//10]
+        self.res = [res[0]//20,res[1]//20]
         self.mur = mur
         self.sol = sol
-        self.carte = [[False] * self.res[0] for i in range(self.res[1])]
-    def walk(self,x,y):
-        self.carte[y][x] = True
-        d = [(x - 1, y), (x, y + 1), (x + 1, y), (x, y - 1)]
-        shuffle(d)
-        for (xx,yy) in d:
-            if randint(0,1) == 1 and xx >= 0 and xx < self.res[0] and yy >= 0 and yy < self.res[1] and not self.carte[yy][xx]:
-                self.walk(xx,yy)
-        self.carte[0] = [False] * self.res[0]
-        self.carte[-1] = [False] * self.res[0]
-        for i in range(self.res[1]):
-            self.carte[i][0] = False
-            self.carte[i][-1] = False
-
-
+        self.vis = [[0] * self.res[0] + [1] for _ in range(self.res[1])] + [[1] * (self.res[0] + 1)]
+        self.ver = [[True] * self.res[0] + [True] for _ in range(self.res[1])] + [[]]
+        self.hor = [[True] * self.res[0] + [True] for _ in range(self.res[1] + 1)]
+    def make_maze(self):
+        def walk(x, y):
+            self.vis[y][x] = 1
+            d = [(x - 1, y), (x, y + 1), (x + 1, y), (x, y - 1)]
+            shuffle(d)
+            for (xx, yy) in d:
+                if self.vis[yy][xx]: continue
+                if xx == x: self.hor[max(y, yy)][x] = False
+                if yy == y: self.ver[y][max(x, xx)] = False
+                walk(xx, yy)
     
+        walk(randrange(self.res[0]), randrange(self.res[1]))
+        s = []
+        for (a, b) in zip(self.hor, self.ver):
+            s += a,b
+        return s
+
