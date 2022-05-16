@@ -6,7 +6,6 @@ class Map:
         self.mur = mur
         self.sol = sol
         self.carte = [[randint(0,1) for i in range(self.res[0])] for i in range(self.res[1])]
-        print(len(self.carte),len(self.carte[0]))
-        self.carte[0][0] = 0
+        self.carte[20][30] = 0
 
     

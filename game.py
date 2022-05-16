@@ -9,7 +9,7 @@ class Game:
         self.screen = pygame.display.set_mode(res)
         self.running = True 
         self.clock = pygame.time.Clock()
-        self.player = Player(30,20,(255,0,0),1)
+        self.player = Player(300,200,(255,0,0),5)
         self.map = Map(self.res,(0,255,0),(0,0,255),self.scale)
 
 
@@ -26,9 +26,9 @@ class Game:
 
     def draw_map(self,scale):
         wall_coll = []
-        for i in range(4):
-            for j in range(6):
-                if self.map.carte[i-self.player.y-2][j-self.player.x-3] == 1:
+        for i in range(40):
+            for j in range(60):
+                if self.map.carte[i][j] == 1:
                     pygame.draw.rect(self.screen,self.map.mur,pygame.Rect(j*scale,i*scale,scale,scale))
                 else:
                     pygame.draw.rect(self.screen,self.map.sol,pygame.Rect(j*scale,i*scale,scale,scale))
@@ -39,6 +39,7 @@ class Game:
         self.screen.fill((0,0,0))
         self.draw_map(self.scale)
         self.handle_inputs(self.player)
+        self.player.update_player()
         pygame.draw.rect(self.screen,self.player.sprite,self.player.coll)
 
     def run(self):

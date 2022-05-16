@@ -5,7 +5,7 @@ class Player:
         self.x = x
         self.y = y
         self.sprite = sprite
-        self.coll = pygame.Rect(300,200,100,100)
+        self.coll = pygame.Rect(self.x,self.y,10,10)
         self.speed = speed
 
     def move_up(self) : self.y -= self.speed
@@ -13,4 +13,6 @@ class Player:
     def move_left(self) : self.x -= self.speed
     def move_right(self) : self.x += self.speed
 
+    def update_player(self):
+        self.coll = pygame.Rect(self.x,self.y,10,10)
 
