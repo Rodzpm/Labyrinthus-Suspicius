@@ -2,7 +2,7 @@ from random import shuffle, randrange
 
 class Map:
     def __init__(self,res,mur,sol,scale):
-        self.res = [res[0]//20,res[1]//20]
+        self.res = [res[0]//40,res[1]//40]
         self.mur = mur
         self.sol = sol
         self.vis = [[0] * self.res[0] + [1] for _ in range(self.res[1])] + [[1] * (self.res[0] + 1)]
