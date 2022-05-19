@@ -23,8 +23,10 @@ class Monster:
         self.sprite = sprite
         self.save_player_location = []
         self.start = start
-        self.coll = pygame.Rect(self.x,self.y,40,40)
+        self.coll = pygame.Rect(800,800,40,40)
         self.scale = scale
+        #orientation du sprite selon les valeurs suivantes : Up:0, Down:1, Left:2, Right:3
+        self.orientation = 1
     
     def new_location(self,x,y):
         #ajoute la nouvelle position du joueur dans la file
@@ -36,20 +38,28 @@ class Monster:
     
     def check_pos(self):
         #vérifie si le monstre est sur une case de la file et la supprime
-        #sinon il se déplace ver sla case la plus proche
+        #sinon il se déplace vers la case la plus proche
         if len(self.save_player_location) != 0:
             if (self.x//self.scale,self.y//self.scale) == self.save_player_location[0]:
                 self.save_player_location.pop(0)
-            if self.y//self.scale == self.save_player_location[0][1]:
+            elif self.y//self.scale == self.save_player_location[0][1]:
+                #droite
                 if self.x//self.scale <= self.save_player_location[0][0]:
                     self.x += self.speed
+                    self.orientation = 3
+                #gauche
                 else:
                     self.x -= self.speed
+                    self.orientation = 2
             else:
+                #bas
                 if self.y//self.scale <= self.save_player_location[0][1]:
                     self.y += self.speed
+                    self.orientation = 1
+                #haut
                 else:
                     self.y -= self.speed                
+                    self.orientation = 0
 
     def update_monster(self):
         #met à jour la box de collision du monstre

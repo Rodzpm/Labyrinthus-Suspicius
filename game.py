@@ -30,12 +30,23 @@ class Game:
         self.scale = scale
         #écran pygame
         self.screen = pygame.display.set_mode(res)
+        #musique du jeu
+        self.music = 'assets/sounds/music.mp3'
+        pygame.init()
         pygame.font.init()
+        pygame.mixer.init()
+        pygame.mixer.music.load(self.music)
+        
         #sprite du joueur
         self.player_sprite = [pygame.image.load("assets/sprites/Up_Carac.png").convert_alpha(),
                               pygame.image.load("assets/sprites/Down_Carac.png").convert_alpha(),
                               pygame.image.load("assets/sprites/Left_Carac.png").convert_alpha(),
                               pygame.image.load("assets/sprites/Right_Carac.png").convert_alpha()]
+        #sprite du monstre
+        self.monstre_sprite = [pygame.image.load("assets/sprites/Monster_Up.png").convert_alpha(),
+                              pygame.image.load("assets/sprites/Monster_Down.png").convert_alpha(),
+                              pygame.image.load("assets/sprites/Monster_Left.png").convert_alpha(),
+                              pygame.image.load("assets/sprites/Monster_Right.png").convert_alpha()]
         #sprite du sol
         self.ground_sprite = pygame.image.load("assets/sprites/Ground.png").convert()
         #sprite du tp
@@ -53,7 +64,7 @@ class Game:
         self.maze = self.map.maze
         self.map.tp = self.map.map.ground[-1]
         self.tp = pygame.Rect(self.map.tp[1]*self.scale,self.map.tp[0]*self.scale,40,40)
-        self.monster = Monster(40,40,3,(255,0,0),2,self.scale)
+        self.monster = Monster(40,40,3,self.monstre_sprite,2,self.scale)
         #timer + nombre de frame
         self.timer = 0
         self.actual_frame = 0
@@ -104,6 +115,13 @@ class Game:
                 return True
         return False
 
+    def check_coll_monster(self):
+        #vérifie si le joueur est touché par le monstre
+        if self.player.coll.colliderect(self.monster.coll):
+            return True
+        else:
+            return False
+
     def update(self):
         #met à jour le jeu à chauqe frame
         #update du timer
@@ -127,9 +145,17 @@ class Game:
         #affiche écran de victoire si le joueur a fini le labyrinthe
         if self.player.coll.colliderect(self.tp):
             self.playing = False
+            pygame.mixer.music.stop()
             pygame.draw.rect(self.screen,(255,255,255),pygame.Rect(310,210,620,420))
             self.screen.blit(self.police.render ("Congrats !", 1 , (255,0,0) ), (465,240))
             self.screen.blit(self.police.render ("Time : "+str(self.timer), 1 , (0,0,0) ), (465,350))
+        #affiche game over si le joueur est touché par le monstre
+        if self.check_coll_monster():
+            self.playing = False
+            pygame.mixer.music.stop()
+            pygame.draw.rect(self.screen,(255,255,255),pygame.Rect(310,210,620,420))
+            self.screen.blit(self.police.render ("Game Over !", 1 , (255,0,0) ), (465,240))
+            self.screen.blit(self.police.render ("Time : "+str(self.timer), 1 , (0,0,0) ), (465,350)) 
         #replace le joueur si il est dans un mur
         if self.check_coll(coll_list):
             self.player.x = x
@@ -140,13 +166,15 @@ class Game:
             pygame.draw.rect(self.screen,(255,255,255),pygame.Rect(0,0,110,30))
             self.screen.blit(self.player.sprite[self.player.orientation],(self.player.x,self.player.y))
             if self.timer >= self.monster.start:
+                self.monster.coll = pygame.Rect(40,40,40,40)
                 self.monster.check_pos()
                 self.monster.update_monster()
-                pygame.draw.rect(self.screen,self.monster.sprite,self.monster.coll)
+                self.screen.blit(self.monster.sprite[self.monster.orientation],(self.monster.x,self.monster.y))           
             self.screen.blit(self.police2.render ("Time :"+str(self.timer), 1 , (0,0,0) ), (5,5))
 
     def run(self):
         #boucle du jeu
+        pygame.mixer.music.play(-1)
         while self.running:
             self.update()
             for event in pygame.event.get():
