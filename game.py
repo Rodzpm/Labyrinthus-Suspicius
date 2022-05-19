@@ -2,7 +2,7 @@ import pygame
 from player import Player
 from map import Map
 from random import randrange
-
+from monster import Monster
 
 class Game:
     def __init__(self, res, scale):
@@ -29,15 +29,17 @@ class Game:
         self.actual_frame = 0
         self.police = pygame.font.SysFont("monospace" ,60)
         self.police2 = pygame.font.SysFont("monospace" ,20)
+        self.monster = Monster(40,40,3,(255,0,0),2,self.scale)
+
         
 
     def handle_inputs(self,player):
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_LSHIFT] and not player.is_sprint:
-            player.speed = player.speed*1.5
+            player.speed = player.speed*2
             player.is_sprint = True
         if not pressed[pygame.K_LSHIFT] and player.is_sprint:
-            player.speed = player.speed/1.5
+            player.speed = player.speed//2
             player.is_sprint = False
         if pressed[pygame.K_z]:
             player.move_up()  
@@ -50,10 +52,12 @@ class Game:
 
     def draw_map(self):
         wall_coll = []
+        wall_pos = []
         for i in range(self.res[1]//self.scale):
             for j in range(self.res[0]//self.scale):
                 if not self.maze[i][j]:
                     wall_coll.append(pygame.Rect(j*self.scale,i*self.scale,self.scale,self.scale))
+                    wall_pos.append((j,i))
                     self.screen.blit(self.map.mur,(j*self.scale,i*self.scale))
                     #pygame.draw.rect(self.screen,self.map.mur,pygame.Rect(j*scale,i*scale,scale,scale))
                 else:
@@ -63,7 +67,7 @@ class Game:
                         self.screen.blit(self.map.sol,(j*self.scale,i*self.scale))
                     #pygame.draw.rect(self.screen,self.map.sol,pygame.Rect(j*scale,i*scale,scale,scale))
         self.t = 0
-        return wall_coll
+        return wall_coll, wall_pos
 
     def check_coll(self,col):
         for collision in col:
@@ -78,11 +82,12 @@ class Game:
                 self.timer += 1
                 self.actual_frame = 0
         self.screen.fill((0,0,0))
-        coll_list = self.draw_map()
+        coll_list,wall_pos = self.draw_map()
         x,y = self.player.x,self.player.y
         if self.playing:
             self.handle_inputs(self.player)
         self.player.update_player()
+        self.monster.new_location(self.player.x//self.scale,self.player.y//self.scale,wall_pos)
         if self.player.coll.colliderect(self.tp):
             self.playing = False
             pygame.draw.rect(self.screen,(255,255,255),pygame.Rect(310,210,620,420))
@@ -95,8 +100,11 @@ class Game:
         if self.playing:
             pygame.draw.rect(self.screen,(255,255,255),pygame.Rect(0,0,110,30))
             self.screen.blit(self.player.sprite[self.player.orientation],(self.player.x,self.player.y))
+            if self.timer >= self.monster.start:
+                self.monster.check_pos()
+                self.monster.update_monster()
+                pygame.draw.rect(self.screen,self.monster.sprite,self.monster.coll)
             self.screen.blit(self.police2.render ("Time :"+str(self.timer), 1 , (0,0,0) ), (5,5))
-        #pygame.draw.rect(self.screen,self.player.sprite[self.player.orientation],self.player.coll)
 
     def run(self):
         while self.running:
