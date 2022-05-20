@@ -17,6 +17,10 @@ class Map:
         self.tp = tp
         self.map = Maze(self.res[0],self.res[1])
         self.maze = self.map.gen_maze()
+    
+    def replay(self):
+        self.map = Maze(self.res[0],self.res[1])
+        self.maze = self.map.gen_maze()
         
     
 

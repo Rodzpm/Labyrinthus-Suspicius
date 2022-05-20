@@ -4,6 +4,7 @@ from player import Player
 from map import Map
 from random import randrange
 from monster import Monster
+from time import sleep
 
 #CLASS
 class Game:
@@ -23,15 +24,24 @@ class Game:
           cas le remettre à sa place d'avant
         - affiche les murs, le sol, le joueur, le monstre et le timer 
     """
-    def __init__(self, res, scale):
-        #taille de la fenêtre
-        self.res = res
+    def __init__(self, scale):
         #multiplicateur sur le jeu
         self.scale = scale
+        #taille de la fenêtre
+        self.screen = pygame.display.set_mode()     
+        x, y = self.screen.get_size()
+        x -= 40
+        y -= 40
+        self.res = [int(x/40)*40,int(y/40)*40]
+        if (self.res[0]//self.scale)%2 == 0:
+            self.res[0] -= self.scale
+        if (self.res[1]//self.scale)%2 == 0:
+            self.res[1] -= self.scale   
         #écran pygame
-        self.screen = pygame.display.set_mode(res)
+        self.screen = pygame.display.set_mode(self.res)
         #musique du jeu
         self.music = 'assets/sounds/music.mp3'
+        self.ear = 'assets/sounds/ear.mp3'
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
@@ -53,9 +63,13 @@ class Game:
         self.ground_tp_sprite = pygame.image.load("assets/sprites/Ground_tp.png").convert()
         #sprite des murs
         self.wall_sprite = pygame.image.load("assets/sprites/Wall.png").convert()
+        #screamer
+        self.screamer_sprite = pygame.transform.scale(pygame.image.load("assets/sprites/screamer.jpg").convert(),(self.res[0], self.res[1]))
+        
         #booleen pour lancer la fenêtre et mettre le jeu en pause ou non
         self.running = True 
         self.playing = True
+        self.screamer = False
         #clock du jeu
         self.clock = pygame.time.Clock()
         #joueur, map, et labyrinthe 
@@ -68,9 +82,11 @@ class Game:
         #timer + nombre de frame
         self.timer = 0
         self.actual_frame = 0
+        self.screamer_cooldown = 120
         #police pour le timer et l'écran de fin
         self.police = pygame.font.SysFont("monospace" ,60)
         self.police2 = pygame.font.SysFont("monospace" ,20)
+
         
 
         
@@ -78,20 +94,25 @@ class Game:
     def handle_inputs(self,player):
         #récupère les touches pressées par le joueur et déplace le joueur
         pressed = pygame.key.get_pressed()
-        if pressed[pygame.K_LSHIFT] and not player.is_sprint:
-            player.speed = player.speed*2
-            player.is_sprint = True
-        if not pressed[pygame.K_LSHIFT] and player.is_sprint:
-            player.speed = player.speed//2
-            player.is_sprint = False
-        if pressed[pygame.K_z]:
-            player.move_up()  
-        if pressed[pygame.K_s]:
-            player.move_down()  
-        if pressed[pygame.K_q]:
-            player.move_left() 
-        if pressed[pygame.K_d]:
-            player.move_right() 
+        if self.playing:
+            if pressed[pygame.K_LSHIFT] and not player.is_sprint:
+                player.speed = player.speed*2
+                player.is_sprint = True
+            if not pressed[pygame.K_LSHIFT] and player.is_sprint:
+                player.speed = player.speed//2
+                player.is_sprint = False
+            if pressed[pygame.K_z]:
+                player.move_up()  
+            if pressed[pygame.K_s]:
+                player.move_down()  
+            if pressed[pygame.K_q]:
+                player.move_left() 
+            if pressed[pygame.K_d]:
+                player.move_right() 
+        if not self.playing:
+            if pressed[pygame.K_RETURN]:
+                self.running = False
+
 
     def draw_map(self):
         #dessine le labyrinthe et renvoie le collisions de tous les murs
@@ -130,6 +151,8 @@ class Game:
             if self.actual_frame == 60:
                 self.timer += 1
                 self.actual_frame = 0
+        if self.screamer:
+            self.screamer_cooldown -= 1
         #efface ce qu'il y a sur l'écran
         self.screen.fill((0,0,0))
         #liste des collisions
@@ -137,25 +160,30 @@ class Game:
         #sauvegarde des coordonées du joueur
         x,y = self.player.x,self.player.y
         #déplacement du joueur
-        if self.playing:
-            self.handle_inputs(self.player)
+        self.handle_inputs(self.player)
         #met à jour le joueur + modifie la file du monstre
         self.player.update_player()
         self.monster.new_location((self.player.x+20)//self.scale,(self.player.y+20)//self.scale)
+        
+        if self.screamer:
+            self.screen.blit(self.screamer_sprite,(0,0))
+            if self.screamer_cooldown <= 0:
+                self.running = False
         #affiche écran de victoire si le joueur a fini le labyrinthe
         if self.player.coll.colliderect(self.tp):
             self.playing = False
             pygame.mixer.music.stop()
-            pygame.draw.rect(self.screen,(255,255,255),pygame.Rect(310,210,620,420))
-            self.screen.blit(self.police.render ("Congrats !", 1 , (255,0,0) ), (465,240))
-            self.screen.blit(self.police.render ("Time : "+str(self.timer), 1 , (0,0,0) ), (465,350))
+            pygame.draw.rect(self.screen,(255,255,255),pygame.Rect(self.res[0]//4,self.res[1]//4,2*self.res[0]//4,2*self.res[1]//4))
+            self.screen.blit(self.police.render ("Congrats !", 1 , (255,0,0) ), (self.res[0]//4+155,self.res[1]//4+30))
+            self.screen.blit(self.police.render ("Time : "+str(self.timer), 1 , (0,0,0) ), (self.res[0]//4+155,self.res[1]//4+140))
+            self.screen.blit(self.police2.render ("Press ENTER to continue", 1 , (0,0,0) ), (self.res[0]//4+155,self.res[1]//4+240))
         #affiche game over si le joueur est touché par le monstre
-        if self.check_coll_monster():
-            self.playing = False
+        if self.check_coll_monster() and not self.screamer:
             pygame.mixer.music.stop()
-            pygame.draw.rect(self.screen,(255,255,255),pygame.Rect(310,210,620,420))
-            self.screen.blit(self.police.render ("Game Over !", 1 , (255,0,0) ), (465,240))
-            self.screen.blit(self.police.render ("Time : "+str(self.timer), 1 , (0,0,0) ), (465,350)) 
+            pygame.mixer.music.load(self.ear)
+            pygame.mixer.music.play()
+            self.playing = False
+            self.screamer = True
         #replace le joueur si il est dans un mur
         if self.check_coll(coll_list):
             self.player.x = x
